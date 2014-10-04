@@ -1,0 +1,39 @@
+#+TITLE:     tcp2dot
+#+AUTHOR:    Osiris Alejandro Gómez
+#+EMAIL:     osiux@osiux.com
+#+LANGUAGE:  es
+#+LINK_HOME: index.html
+#+LINK:      ISSUE https://github.com/osiris/tcp2dot/issues/
+#+INCLUDE: "tcp2dot.org"
+
+
+** Overview
+
+   Read a =.pcap= file and generate a =.dot= file with tcp traffic.
+
+** Install
+
+   Clone the repository:
+
+   #+BEGIN_EXAMPLE
+     cd ~
+     git clone https://github.com/osiris/tcp2dot
+   #+END_EXAMPLE
+
+** Dependences
+
+   - tcpdump
+   - graphviz
+
+** Usage
+
+   #+BEGIN_EXAMPLE
+     tcp2dot test.pcap | neato -Tpng >test.png
+   #+END_EXAMPLE
+
+** License
+
+   This program is free software: you can redistribute it and/or
+   modify it under the terms of the GNU General Public License as
+   published by the Free Software Foundation, either version 3 of the
+   License, or any later version.
