@@ -30,18 +30,20 @@ RANK=200
 PACKETS=1000
 DOT=tcp2dot.dot
 
-tcpdump -tttnnn -r $PCAP $FILTERS | cut -d ' ' -f 3,5 | tr -d ":" | \
+tcpdump -tttnnn -r $PCAP $FILTERS 2>/dev/null | \
+cut -d ' ' -f 3,5 | tr -d ":" | \
 egrep -v "[a-zA-Z]" | \
 sort | uniq -c | sort -nr | \
 awk '{print $2"."$3}' | \
+head -n $RANK | \
 awk -F\. '{print $1"."$2"."$3"."$4" "$5" "$6"."$7"."$8"."$9" "$10}' > $IPS
 
 ua ()
 {
   c=1
   I=''
-  WORDS=$(echo "$1" | tr A-Z a-z | egrep -wo "[a-z]+{3,}")
-  echo $WORDS | tr " " "\n" | while read W
+  WORDS=$(echo "$1" | tr "/" " " | tr A-Z a-z | egrep -wo "[a-z]+{3,}")
+  echo $WORDS | tr " " "\n" | sort -u | while read W
   do
     F=img/$W.png
     if [ $c -gt 4 ]
@@ -70,10 +72,18 @@ do
   SPORT=$(echo $LINE | cut -d ' ' -f2)
   DIP=$(echo $LINE | cut -d ' ' -f3)
   DPORT=$(echo $LINE | cut -d ' ' -f4)
+  
+  S=$SIP"."$SPORT
+  D=$DIP"."$DPORT
 
-  echo "\""$SIP"\" -> \""$SPORT"\" [len=1.5];" >>$DOT
-  echo "\""$DIP"\" -> \""$DPORT"\" [len=1.5];" >>$DOT
-  echo "\""$SIP"."$SPORT\"" -> \""$DIP"."$DPORT"\" [len=3];" >>$DOT
+  echo "\""$SIP"\" -> \""$S"\" [len=3];" >>$DOT
+  echo "\""$S"\" -> \""$D"\" [len=1.5];" >>$DOT
+  echo "\""$D\"" -> \""$DIP"\" [len=3];" >>$DOT
+
+  echo "\""$SIP\"" [label=\""$SIP"\"];" >>$DOT
+  echo "\""$DIP\"" [label=\""$DIP"\"];" >>$DOT
+  echo "\""$S\"" [label=\""$SPORT"\"];" >>$DOT
+  echo "\""$D\"" [label=\""$DPORT"\"];" >>$DOT
 
 done
 
@@ -84,18 +94,17 @@ do
   SPORT=$(echo $SIP_SPORT | cut -d' ' -f2)
   HTTP_GET="src host $SIP and src port $SPORT and dst port 80 and tcp[32:4]= 0x47455420"
   TCP_UA="tcpdump -tttnnnA -s0 -c1 -r $PCAP $HTTP_GET"
-  UA=$($TCP_UA | egrep "^User-Agent:" | cut -c 13-)
+  UA=$($TCP_UA 2>/dev/null | egrep "^User-Agent:" | cut -c 13-)
   IMG=$(ua "$UA")
   F=$(echo $SIP_SPORT | tr " " ".")
 
-  if [ -z "$IMG" ]
+  if [ ! -z "$IMG" ]
   then
-    echo "\""$F"\" [shape=none, label=\""$SPORT"\"];" >>$DOT
-  else
     convert -append $IMG img/$F.png
-    echo "\""$F"\" [shape=none, label=\"\", image=\"img/$F.png\"];" >>$DOT
+    echo "\""$F"\" [shape=\"none\", label=\"\", image=\"img/$F.png\"];" >>$DOT
   fi
 done
 
-echo "};" >>$DOT
+echo "}" >>$DOT
 
+cat $DOT

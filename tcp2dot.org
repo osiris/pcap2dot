@@ -8,7 +8,7 @@
 
 
 ** Releases
-*** Release 0.1 [1/1]
+*** Release 0.1 [2/2]
 **** DONE publish PoC
      CLOSED: [2014-10-04 sáb 14:58]
      :LOGBOOK:
@@ -16,4 +16,21 @@
      CLOCK: [2014-10-04 sáb 03:41]--[2014-10-04 sáb 06:31] =>  2:50
      :END:
 
+**** DONE replace awk to bash and convert user-agent to image
+     CLOSED: [2014-10-06 lun 01:05]
+     :LOGBOOK:
+     - State "DONE"       from ""           [2014-10-06 lun 01:05]
+     CLOCK: [2014-10-06 lun 00:18]--[2014-10-06 lun 00:58] =>  0:40
+     CLOCK: [2014-10-05 dom 20:18]--[2014-10-05 dom 21:10] =>  0:52
+     CLOCK: [2014-10-05 dom 19:25]--[2014-10-05 dom 19:41] =>  0:16
+     CLOCK: [2014-10-05 dom 15:38]--[2014-10-05 dom 18:52] =>  3:14
+     CLOCK: [2014-10-05 dom 12:05]--[2014-10-05 dom 12:34] =>  0:29
+     :END:
+
+***** DONE fix =.dot= and refactor
+      CLOSED: [2014-10-06 lun 17:40]
+      :LOGBOOK:
+      - State "DONE"       from ""           [2014-10-06 lun 17:40]
+      CLOCK: [2014-10-06 lun 15:12]--[2014-10-06 lun 17:22] =>  2:10
+      :END:
 
