@@ -24,7 +24,7 @@ else
   PCAP=$1
 fi
 
-FILTERS='not arp and dst port 80'
+FILTERS='port 80'
 IPS='ips.tmp'
 RANK=200
 PACKETS=1000
@@ -38,7 +38,7 @@ awk '{print $2"."$3}' | \
 head -n $RANK | \
 awk -F\. '{print $1"."$2"."$3"."$4" "$5" "$6"."$7"."$8"."$9" "$10}' > $IPS
 
-ua ()
+words2png ()
 {
   c=1
   I=''
@@ -87,21 +87,48 @@ do
 
 done
 
+# capture Server header
+grep " 80 " $IPS | sort -u | while read LINE
+do
+  SIP=$(echo $LINE | cut -d' ' -f1)
+  DIP=$(echo $LINE | cut -d' ' -f3)
+  DPORT=$(echo $LINE | cut -d' ' -f4)
+  FILTER="src port 80 and src $SIP and dst $DIP and dst port $DPORT"
+  SERVER=$(ngrep -I $PCAP -S 190 -q -W byline 'Server:' $FILTER | \
+  grep ^Server: | head -1 | cut -c 9-)
+  IMG=$(words2png "$SERVER")
+  NODE=$SIP".80"
+  FILE=img/$NODE.png
+
+  if [ ! -z "$IMG" ]
+  then
+    if [ ! -e $FILE ]
+    then
+      convert -append $IMG $FILE
+    fi
+    echo "\""$NODE"\" [shape=\"none\", label=\"\", image=\"$FILE\"];" >>$DOT
+  fi
+done
+
 # capture User-agent
 grep 80$ $IPS | cut -d ' ' -f1,2 | sort -u | while read SIP_SPORT
 do
   SIP=$(echo $SIP_SPORT | cut -d' ' -f1)
   SPORT=$(echo $SIP_SPORT | cut -d' ' -f2)
   HTTP_GET="src host $SIP and src port $SPORT and dst port 80 and tcp[32:4]= 0x47455420"
-  TCP_UA="tcpdump -tttnnnA -s0 -c1 -r $PCAP $HTTP_GET"
+  TCP_UA="tcpdump -tttnnnA -s1024 -c1 -r $PCAP $HTTP_GET"
   UA=$($TCP_UA 2>/dev/null | egrep "^User-Agent:" | cut -c 13-)
-  IMG=$(ua "$UA")
-  F=$(echo $SIP_SPORT | tr " " ".")
+  IMG=$(words2png "$UA")
+  NODE=$SIP"."$SPORT
+  FILE=img/$NODE.png
 
   if [ ! -z "$IMG" ]
   then
-    convert -append $IMG img/$F.png
-    echo "\""$F"\" [shape=\"none\", label=\"\", image=\"img/$F.png\"];" >>$DOT
+    if [ ! -e $FILE ]
+    then
+      convert -append $IMG $FILE
+    fi
+    echo "\""$NODE"\" [shape=\"none\", label=\"\", image=\"$FILE\"];" >>$DOT
   fi
 done
 

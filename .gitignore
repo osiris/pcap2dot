@@ -1,2 +1,4 @@
 *.pcap
+*.tmp
+*~
 img/[0-9]*.png
