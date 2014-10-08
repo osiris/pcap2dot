@@ -8,7 +8,7 @@
 
 
 ** Releases
-*** Release 0.1 [4/4]
+*** Release 0.1 [5/5]
 **** DONE publish PoC
      CLOSED: [2014-10-04 sáb 14:58]
      :LOGBOOK:
@@ -41,3 +41,9 @@
      CLOCK: [2014-10-07 mar 02:42]--[2014-10-07 mar 04:15] =>  1:33
      :END:
 
+**** DONE add penwidth in relationships (S|D)IP -> (S|D)PORT
+     CLOSED: [2014-10-08 mié 06:11]
+     :LOGBOOK:
+     - State "DONE"       from ""           [2014-10-08 mié 06:11]
+     CLOCK: [2014-10-08 mié 05:08]--[2014-10-08 mié 06:08] =>  1:00
+     :END:

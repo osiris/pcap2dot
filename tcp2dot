@@ -25,7 +25,11 @@ else
 fi
 
 FILTERS='port 80'
-IPS='ips.tmp'
+
+ITMP='ips.tmp'
+STMP='sip.tmp'
+DTMP='dip.tmp'
+
 RANK=200
 PACKETS=1000
 DOT=tcp2dot.dot
@@ -36,7 +40,7 @@ egrep -v "[a-zA-Z]" | \
 sort | uniq -c | sort -nr | \
 awk '{print $2"."$3}' | \
 head -n $RANK | \
-awk -F\. '{print $1"."$2"."$3"."$4" "$5" "$6"."$7"."$8"."$9" "$10}' > $IPS
+awk -F\. '{print $1"."$2"."$3"."$4" "$5" "$6"."$7"."$8"."$9" "$10}' > $ITMP
 
 words2png ()
 {
@@ -66,7 +70,43 @@ echo "digraph tcp {" >$DOT
 echo 'node [shape="none", fontname="inconsolata", fontsize=10];' >>$DOT
 echo 'edge [arrowsize=.5, color=gray];' >>$DOT
 
-cat $IPS | while read LINE
+cat $ITMP | awk '{print $1,$2}' | sort | uniq -c | \
+awk '{print $2,$3,$1}' >$STMP
+
+TOTAL_SIP=$(awk 'BEGIN {S=0} {S+=$3} END {print S}' $STMP)
+
+cat $STMP | while read LINE
+do
+  SIP=$(echo $LINE | cut -d ' ' -f1)
+  SPORT=$(echo $LINE | cut -d ' ' -f2)
+  PACKETS=$(echo $LINE | cut -d ' ' -f3)
+  PW=$(echo $PACKETS $TOTAL_SIP | awk '{printf "%0.2f",($1/$2)*50}')
+  S=$SIP"."$SPORT
+
+  echo "\""$SIP"\" -> \""$S"\" [len=3, penwidth=$PW];" >>$DOT
+  echo "\""$SIP\"" [label=\""$SIP"\"];" >>$DOT
+  echo "\""$S\"" [label=\""$SPORT"\"];" >>$DOT
+done
+
+cat $ITMP | awk '{print $3,$4}' | sort | uniq -c | \
+awk '{print $2,$3,$1}' >$DTMP
+
+TOTAL_DIP=$(awk 'BEGIN {S=0} {S+=$3} END {print S}' $DTMP)
+
+cat $DTMP | while read LINE
+do
+  DIP=$(echo $LINE | cut -d ' ' -f1)
+  DPORT=$(echo $LINE | cut -d ' ' -f2)
+  PACKETS=$(echo $LINE | cut -d ' ' -f3)
+  PW=$(echo $PACKETS $TOTAL_DIP | awk '{printf "%0.2f",($1/$2)*50}')
+  S=$DIP"."$DPORT
+
+  echo "\""$DIP"\" -> \""$S"\" [len=3, penwidth=$PW];" >>$DOT
+  echo "\""$DIP\"" [label=\""$DIP"\"];" >>$DOT
+  echo "\""$D\"" [label=\""$DPORT"\"];" >>$DOT
+done
+
+cat $ITMP | while read LINE
 do
   SIP=$(echo $LINE | cut -d ' ' -f1)
   SPORT=$(echo $LINE | cut -d ' ' -f2)
@@ -76,19 +116,11 @@ do
   S=$SIP"."$SPORT
   D=$DIP"."$DPORT
 
-  echo "\""$SIP"\" -> \""$S"\" [len=3];" >>$DOT
   echo "\""$S"\" -> \""$D"\" [len=1.5];" >>$DOT
-  echo "\""$D\"" -> \""$DIP"\" [len=3];" >>$DOT
-
-  echo "\""$SIP\"" [label=\""$SIP"\"];" >>$DOT
-  echo "\""$DIP\"" [label=\""$DIP"\"];" >>$DOT
-  echo "\""$S\"" [label=\""$SPORT"\"];" >>$DOT
-  echo "\""$D\"" [label=\""$DPORT"\"];" >>$DOT
-
 done
 
 # capture Server header
-grep " 80 " $IPS | sort -u | while read LINE
+grep " 80 " $ITMP | sort -u | while read LINE
 do
   SIP=$(echo $LINE | cut -d' ' -f1)
   DIP=$(echo $LINE | cut -d' ' -f3)
@@ -111,7 +143,7 @@ do
 done
 
 # capture User-agent
-grep 80$ $IPS | cut -d ' ' -f1,2 | sort -u | while read SIP_SPORT
+grep 80$ $ITMP | cut -d ' ' -f1,2 | sort -u | while read SIP_SPORT
 do
   SIP=$(echo $SIP_SPORT | cut -d' ' -f1)
   SPORT=$(echo $SIP_SPORT | cut -d' ' -f2)
