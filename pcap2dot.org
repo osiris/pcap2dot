@@ -1,14 +1,14 @@
-#+TITLE:     tcp2dot
+#+TITLE:     pcap2dot
 #+AUTHOR:    Osiris Alejandro Gómez
 #+EMAIL:     osiux@osiux.com
 #+LANGUAGE:  en
-#+LINK:      ISSUE https://github.com/osiris/tcp2dot/issues/
-#+LINK:      GIT https://github.com/osiris/tcp2dot/commit/
+#+LINK:      ISSUE https://github.com/osiris/pcap2dot/issues/
+#+LINK:      GIT https://github.com/osiris/pcap2dot/commit/
 
 
 
 ** Releases
-*** Release 0.1 [5/5]
+*** Release 0.1 [6/6]
 **** DONE publish PoC
      CLOSED: [2014-10-04 sáb 14:58]
      :LOGBOOK:
@@ -47,3 +47,10 @@
      - State "DONE"       from ""           [2014-10-08 mié 06:11]
      CLOCK: [2014-10-08 mié 05:08]--[2014-10-08 mié 06:08] =>  1:00
      :END:
+**** DONE rename repo to pcap2dot
+     CLOSED: [2014-10-10 vie 09:55]
+     :LOGBOOK:
+     - State "DONE"       from ""           [2014-10-10 vie 09:55]
+     CLOCK: [2014-10-10 vie 09:50]--[2014-10-10 vie 09:55] =>  0:05
+     :END:
+
