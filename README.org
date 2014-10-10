@@ -1,10 +1,10 @@
-#+TITLE:     tcp2dot
+#+TITLE:     pcap2dot
 #+AUTHOR:    Osiris Alejandro Gómez
 #+EMAIL:     osiux@osiux.com
 #+LANGUAGE:  es
 #+LINK_HOME: index.html
-#+LINK:      ISSUE https://github.com/osiris/tcp2dot/issues/
-#+INCLUDE: "tcp2dot.org"
+#+LINK:      ISSUE https://github.com/osiris/pcap2dot/issues/
+#+INCLUDE: "pcap2dot.org"
 
 
 ** Overview
@@ -17,7 +17,7 @@
 
    #+BEGIN_EXAMPLE
      cd ~
-     git clone https://github.com/osiris/tcp2dot
+     git clone https://github.com/osiris/pcap2dot
    #+END_EXAMPLE
 
 ** Dependences
@@ -28,7 +28,7 @@
 ** Usage
 
    #+BEGIN_EXAMPLE
-     tcp2dot test.pcap | neato -Tpng >test.png
+     pcap2dot test.pcap | neato -Tpng >test.png
    #+END_EXAMPLE
 
 ** License
