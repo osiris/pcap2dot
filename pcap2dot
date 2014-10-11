@@ -59,6 +59,8 @@ words2png ()
         echo $F
         I=$I' '$F
         c=$[$c+1]
+      else
+        echo "not found file: $F" >> error.log
       fi
     fi
   done
