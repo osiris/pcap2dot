@@ -8,7 +8,7 @@
 
 
 ** Releases
-*** Release 0.1 [6/6]
+*** Release 0.1 [7/7]
 **** DONE publish PoC
      CLOSED: [2014-10-04 sáb 14:58]
      :LOGBOOK:
@@ -52,5 +52,12 @@
      :LOGBOOK:
      - State "DONE"       from ""           [2014-10-10 vie 09:55]
      CLOCK: [2014-10-10 vie 09:50]--[2014-10-10 vie 09:55] =>  0:05
+     :END:
+**** DONE refactor words2png
+     CLOSED: [2014-10-12 dom 13:59]
+     :LOGBOOK:
+     - State "DONE"       from ""           [2014-10-12 dom 13:59]
+     CLOCK: [2014-10-12 dom 13:09]--[2014-10-12 dom 13:59] =>  0:50
+     CLOCK: [2014-10-11 sáb 14:33]--[2014-10-11 sáb 17:28] =>  2:55
      :END:
 

@@ -32,7 +32,18 @@ DTMP='dip.tmp'
 
 RANK=200
 PACKETS=1000
-DOT=tcp2dot.dot
+DOT=pcap2dot.dot
+LOG=pcap2dot.log
+
+>$LOG
+
+log ()
+{
+  NOW=$(date "+%Y-%m-%d %H:%M")
+  echo $NOW' '"$1" >>$LOG
+}
+
+log "Reading $PCAP with $FILTERS"
 
 tcpdump -tttnnn -r $PCAP $FILTERS 2>/dev/null | \
 cut -d ' ' -f 3,5 | tr -d ":" | \
@@ -44,29 +55,111 @@ awk -F\. '{print $1"."$2"."$3"."$4" "$5" "$6"."$7"."$8"."$9" "$10}' > $ITMP
 
 words2png ()
 {
-  c=1
-  I=''
-  WORDS=$(echo "$1" | tr "/" " " | tr A-Z a-z | egrep -wo "[a-z]+{3,}")
-  echo $WORDS | tr " " "\n" | sort -u | while read W
+  c=0
+  WORDS=$(echo "$1" | tr "/.\(,;:\)" " "  | tr A-Z a-z)
+
+  G='^[a-z]{1,}[a-z0-9_\-]{2,}'
+  LIST=$(echo $WORDS | tr " " "\n" | sort -u | egrep -v "^$" | egrep "$G")
+  
+  while read W
   do
-    F=img/$W.png
+    F="img/$W.png"
+
     if [ $c -gt 4 ]
     then
       break;
+    fi
+
+    if [ -e "$F" ]
+    then
+      I[c]=$W
+      c=$[$c+1]
     else
-      if [ -e $F ]
+      log "not found file: $F"
+    fi
+  done <<<"$LIST"
+
+  T=${#I[@]}
+
+  if [ $T -eq 0 ]
+  then
+    echo ''
+    exit
+  fi
+
+  if [ $T -eq 1 ]
+  then
+    echo 'img/'${I[0]}'.png'
+    exit
+  fi
+
+  if [ $T -gt 1 ]
+  then
+    if [[ ${I[*]} =~ 'linux' ]]
+    then
+      if [[ ${I[*]} =~ "android" ]]
       then
-        echo $F
-        I=$I' '$F
-        c=$[$c+1]
-      else
-        echo "not found file: $F" >> error.log
+        I=( $(echo "${I[@]/'linux'}"  | sed s/"\ $"//g) )
+      fi
+      if [[ ${I[*]} =~ "ubuntu" ]]
+      then
+        I=( $(echo "${I[@]/'linux'}"  | sed s/"\ $"//g) )
+      fi
+      if [[ ${I[*]} =~ "debian" ]]
+      then
+        I=( $(echo "${I[@]/'linux'}"  | sed s/"\ $"//g) )
       fi
     fi
-  done
+    if [[ ${I[*]} =~ 'mozilla' ]]
+    then
+      if [[ ${I[*]} =~ "firefox" ]]
+      then
+        I=( $(echo "${I[@]/'mozilla'}"  | sed s/"\ $"//g) )
+      fi
+    fi
+  fi
 
-  echo $I
+  T=${#I[@]}
+
+  if [ $T -eq 0 ]
+  then
+    echo ''
+    exit
+  fi
+
+  if [ $T -eq 1 ]
+  then
+    echo 'img/'${I[0]}'.png'
+    exit
+  fi
+
+  if [ $T -gt 1 ]
+  then
+    GROUP=$(echo "${I[@]}" | tr " " "-")
+    GROUP_FILE='img/'$GROUP'.png'
+
+    if [ ! -e $GROUP_FILE ]
+    then
+      CONVERT=''
+      for n in ${I[@]}
+      do
+        CONVERT=$CONVERT" img/"$n".png "
+      done
+      log "Convert $CONVERT into $GROUP_FILE"
+      convert +append $CONVERT $GROUP_FILE >/dev/null 2>/dev/null
+      OK=$(echo $?)
+      if [ $OK -ne 0 ]
+      then
+        echo ''
+        exit
+      fi
+    fi
+
+    echo $GROUP_FILE
+  fi
 }
+
+log "start generate $DOT"
 
 echo "digraph tcp {" >$DOT
 echo 'node [shape="none", fontname="inconsolata", fontsize=10];' >>$DOT
@@ -132,15 +225,12 @@ do
   grep ^Server: | head -1 | cut -c 9-)
   IMG=$(words2png "$SERVER")
   NODE=$SIP".80"
-  FILE=img/$NODE.png
 
   if [ ! -z "$IMG" ]
   then
-    if [ ! -e $FILE ]
-    then
-      convert -append $IMG $FILE
-    fi
-    echo "\""$NODE"\" [shape=\"none\", label=\"\", image=\"$FILE\"];" >>$DOT
+    echo "\""$NODE"\" [shape=\"none\", label=\"\", image=\"$IMG\"];" >>$DOT
+  else
+    log "Not found image for: $NODE with server: $SERVER"
   fi
 done
 
@@ -154,15 +244,12 @@ do
   UA=$($TCP_UA 2>/dev/null | egrep "^User-Agent:" | cut -c 13-)
   IMG=$(words2png "$UA")
   NODE=$SIP"."$SPORT
-  FILE=img/$NODE.png
 
   if [ ! -z "$IMG" ]
   then
-    if [ ! -e $FILE ]
-    then
-      convert -append $IMG $FILE
-    fi
-    echo "\""$NODE"\" [shape=\"none\", label=\"\", image=\"$FILE\"];" >>$DOT
+    echo "\""$NODE"\" [shape=\"none\", label=\"\", image=\"$IMG\"];" >>$DOT
+  else
+    log "Not found image for: $NODE with User-Agent: $UA"
   fi
 done
 
