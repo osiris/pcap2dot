@@ -237,7 +237,7 @@ do
   S=$SIP"."$SPORT
   D=$DIP"."$DPORT
 
-  echo "\""$S"\" -> \""$D"\" [len=1.5];" >>$DOT
+  echo "\""$S"\" -> \""$D"\" [len=2.5];" >>$DOT
 done
 
 # capture Server header
@@ -247,8 +247,10 @@ do
   DIP=$(echo $LINE | cut -d' ' -f3)
   DPORT=$(echo $LINE | cut -d' ' -f4)
   FILTER="src port 80 and src $SIP and dst $DIP and dst port $DPORT"
-  SERVER=$(tcpdump -nnntttA -s 190 -r $PCAP $FILTER | \
-  grep ^Server: | head -1 | cut -c 9- | tr -d "\n" | tr -d "\r")
+  HEADERS=$(tcpdump -nnntttA -s 190 -r $PCAP $FILTER | \
+    egrep "(Server:|X-Generator:)" | head -2)
+  SERVER=$(echo "$HEADERS" | grep ^Server: | head -1 | cut -c 9- | tr -d "\n" | tr -d "\r")
+  X_GENERATOR=$(echo "$HEADERS" | grep ^X-Generator: | head -1 | cut -c 9- | tr -d "\n" | tr -d "\r")
 
   if [ -z "$SERVER" ]
   then
@@ -258,7 +260,7 @@ do
 
   T=$(echo $SERVER |tr " " "\n" | wc -l)
 
-  IMG=$(words2png "$SERVER")
+  IMG=$(words2png "$SERVER $X_GENERATOR")
   NODE=$SIP".80"
   log "$SIP Server: $SERVER Image: $IMG"
   if [ ! -z "$IMG" ]
