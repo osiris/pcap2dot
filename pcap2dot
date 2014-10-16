@@ -16,14 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-if [ -z $1 ]
-then
-  echo ERROR not found pcap file: $1
-  exit 1
-else
-  PCAP=$1
-fi
-
 FILTERS='port 80'
 
 ITMP='ips.tmp'
@@ -34,6 +26,33 @@ RANK=200
 PACKETS=1000
 DOT=pcap2dot.dot
 LOG=pcap2dot.log
+
+while getopts "d:f:k:r:p:" OPTION
+do
+  case $OPTION in
+    d)
+      DOT=$OPTARG
+      ;;
+    f)
+      FILTERS=$OPTARG
+      ;;
+    k)
+      RANK=$OPTARG
+      ;;
+    p)
+      PACKETS=$OPTARG
+      ;;
+    r)
+      PCAP=$OPTARG
+      ;;
+  esac
+done
+
+if [ ! -e $PCAP ]
+then
+  echo ERROR not found pcap file: $PCAP
+  exit 1
+fi
 
 >$LOG
 
@@ -56,7 +75,7 @@ awk -F\. '{print $1"."$2"."$3"."$4" "$5" "$6"."$7"."$8"."$9" "$10}' > $ITMP
 words2png ()
 {
   c=0
-  WORDS=$(echo "$1" | tr "/.\(,;:\)" " "  | tr A-Z a-z)
+  WORDS=$(echo "$1" | tr "/.\(,;:\)\-" " "  | tr A-Z a-z)
 
   G='^[a-z]{1,}[a-z0-9_\-]{2,}'
   LIST=$(echo $WORDS | tr " " "\n" | sort -u | egrep -v "^$" | egrep "$G")
@@ -115,6 +134,13 @@ words2png ()
       if [[ ${I[*]} =~ "firefox" ]]
       then
         I=( $(echo "${I[@]/'mozilla'}"  | sed s/"\ $"//g) )
+      fi
+    fi
+    if [[ ${I[*]} =~ 'chrome' ]]
+    then
+      if [[ ${I[*]} =~ "chromium" ]]
+      then
+        I=( $(echo "${I[@]/'chrome'}"  | sed s/"\ $"//g) )
       fi
     fi
   fi
@@ -230,6 +256,8 @@ do
     continue
   fi
 
+  T=$(echo $SERVER |tr " " "\n" | wc -l)
+
   IMG=$(words2png "$SERVER")
   NODE=$SIP".80"
   log "$SIP Server: $SERVER Image: $IMG"
@@ -238,6 +266,12 @@ do
     echo "\""$NODE"\" [shape=\"none\", label=\"\", image=\"$IMG\"];" >>$DOT
   else
     log "Not found image for: $NODE with server: $SERVER"
+
+    if [ $T -eq 1 ]
+    then
+      log "using: $SERVER label for: $SIP"
+      echo "\""$NODE"\" [shape=\"none\", label=\"$SERVER\"];" >>$DOT
+    fi
   fi
 done
 
@@ -256,6 +290,7 @@ do
     continue
   fi
 
+  T=$(echo $UA |tr " " "\n" | wc -l)
   IMG=$(words2png "$UA")
   NODE=$SIP"."$SPORT
 
@@ -264,6 +299,11 @@ do
     echo "\""$NODE"\" [shape=\"none\", label=\"\", image=\"$IMG\"];" >>$DOT
   else
     log "Not found image for: $NODE with User-Agent: $UA"
+    if [ $T -eq 1 ]
+    then
+      log "Using $UA label for: $SIP"
+      echo "\""$NODE"\" [shape=\"none\", label=\"$UA\"];" >>$DOT
+    fi
   fi
 done
 
