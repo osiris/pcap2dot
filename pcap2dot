@@ -64,7 +64,7 @@ log ()
 
 log "Reading $PCAP with $FILTERS"
 
-tcpdump -tttnnn -r $PCAP $FILTERS 2>/dev/null | \
+tcpdump -tttnnn -s1 -r $PCAP $FILTERS 2>/dev/null | \
 cut -d ' ' -f 3,5 | tr -d ":" | \
 egrep -v "[a-zA-Z]" | \
 sort | uniq -c | sort -nr | \
@@ -283,7 +283,7 @@ do
   SIP=$(echo $SIP_SPORT | cut -d' ' -f1)
   SPORT=$(echo $SIP_SPORT | cut -d' ' -f2)
   HTTP_GET="src host $SIP and src port $SPORT and dst port 80 and tcp[32:4]= 0x47455420"
-  TCP_UA="tcpdump -tttnnnA -s1024 -c1 -r $PCAP $HTTP_GET"
+  TCP_UA="tcpdump -tttnnnA -s190 -c1 -r $PCAP $HTTP_GET"
   UA=$($TCP_UA 2>/dev/null | egrep "^User-Agent:" | cut -c 13-)
 
   if [ -z "$UA" ]
