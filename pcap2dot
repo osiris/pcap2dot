@@ -24,10 +24,39 @@ DTMP='dip.tmp'
 
 RANK=200
 PACKETS=1000
-DOT=pcap2dot.dot
+DOT=''
+PNG=''
+QUIET=0
+NEATO=0
 LOG=pcap2dot.log
 
-while getopts "d:f:k:r:p:" OPTION
+help ()
+{
+cat <<EOF
+
+USAGE
+
+	pcap2dot [options] -r test.pcap
+
+OPTIONS
+
+	-d dot file
+	-f filters "port 80 and port 53" default: port 80
+	-k rank                          default: 100
+        -g png
+	-p packets                       default: 500
+        -q suppress stdoutput 
+	-r pcap file to read
+        -n neato
+
+EXAMPLE
+
+	pcap2dot -r test.pcap -d test.dot -k 100 -p 500 
+EOF
+exit 0
+}
+
+while getopts "d:f:k:r:p:qng:" OPTION
 do
   case $OPTION in
     d)
@@ -36,14 +65,26 @@ do
     f)
       FILTERS=$OPTARG
       ;;
+    g)
+      PNG=$OPTARG
+      ;;
     k)
       RANK=$OPTARG
       ;;
     p)
       PACKETS=$OPTARG
       ;;
+    q)
+      QUIET=1
+      ;;
+    n)
+      NEATO=1
+      ;;
     r)
       PCAP=$OPTARG
+      ;;
+    *)
+      help
       ;;
   esac
 done
@@ -52,6 +93,16 @@ if [ ! -e $PCAP ]
 then
   echo ERROR not found pcap file: $PCAP
   exit 1
+fi
+
+if [ -z $DOT ]
+then
+  DOT=$(basename $PCAP .pcap).dot
+fi
+
+if [ -z $PNG ]
+then
+  PNG=$(basename $PCAP .pcap).dot
 fi
 
 >$LOG
@@ -71,6 +122,14 @@ sort | uniq -c | sort -nr | \
 awk '{print $2"."$3}' | \
 head -n $RANK | \
 awk -F\. '{print $1"."$2"."$3"."$4" "$5" "$6"."$7"."$8"."$9" "$10}' > $ITMP
+
+ip2png ()
+{
+  HOST=$(grep $1 hosts | awk '{print $2}')
+  [ -z "$HOST" ] && exit
+  IMG=img/$HOST.png
+  [ -e $IMG ] && echo $IMG
+}
 
 words2png ()
 {
@@ -204,9 +263,17 @@ do
   PW=$(echo $PACKETS $TOTAL_SIP | awk '{printf "%0.2f",($1/$2)*50}')
   S=$SIP"."$SPORT
 
-  echo "\""$SIP"\" -> \""$S"\" [len=3, penwidth=$PW];" >>$DOT
+  echo "\""$SIP"\" -> \""$S"\" [len=2, penwidth=$PW];" >>$DOT
   echo "\""$SIP\"" [label=\""$SIP"\"];" >>$DOT
-  echo "\""$S\"" [label=\""$SPORT"\"];" >>$DOT
+
+  IMG=$(ip2png $SIP)
+  log "$SIP Host Image: $IMG"
+  if [ -n "$IMG" ]
+  then
+    echo "\""$NODE"\" [shape=\"none\", label=\"\", image=\"$IMG\"];" >>$DOT
+  else
+    echo "\""$S\"" [label=\""$SPORT"\"];" >>$DOT
+  fi
 done
 
 cat $ITMP | awk '{print $3,$4}' | sort | uniq -c | \
@@ -222,7 +289,7 @@ do
   PW=$(echo $PACKETS $TOTAL_DIP | awk '{printf "%0.2f",($1/$2)*50}')
   S=$DIP"."$DPORT
 
-  echo "\""$DIP"\" -> \""$S"\" [len=3, penwidth=$PW];" >>$DOT
+  echo "\""$DIP"\" -> \""$S"\" [len=2, penwidth=$PW];" >>$DOT
   echo "\""$DIP\"" [label=\""$DIP"\"];" >>$DOT
   echo "\""$D\"" [label=\""$DPORT"\"];" >>$DOT
 done
@@ -263,7 +330,7 @@ do
   IMG=$(words2png "$SERVER $X_GENERATOR")
   NODE=$SIP".80"
   log "$SIP Server: $SERVER Image: $IMG"
-  if [ ! -z "$IMG" ]
+  if [ -n "$IMG" ]
   then
     echo "\""$NODE"\" [shape=\"none\", label=\"\", image=\"$IMG\"];" >>$DOT
   else
@@ -311,4 +378,13 @@ done
 
 echo "}" >>$DOT
 
-cat $DOT
+if [ $QUIET -eq 0 ]
+then
+  cat $DOT
+fi
+
+if [ $NEATO -eq 1 ]
+then
+  neato -Tpng $DOT >$PNG
+fi
+
